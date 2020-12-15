@@ -1,60 +1,34 @@
 #include <stdio.h>
 #include <conio.h>
-#include <windows.h>
-#include<mmsystem.h>
 #include "snake_func.h"
 
 int main()
 {
-    //游戏音乐 bgm
-    //PlaySound(TEXT("E:\\code\\c\\snake-game\\Chinese_Tea.wav"), NULL, SND_FILENAME | SND_ASYNC );
-
-    //游戏地图
-
-    int size_x =8,size_y =11;
-    COORD sk_hd_pos = {3,3},fd_pos = {4,4};
 
 
 
+    //游戏中的配置初始化
+    initial_load();
 
-    char map[8][11];
+    //游戏地图初始化
+    char map[size_x][size_y];
 
     for(int row =0;row<size_x;row++){
         for(int col =0;col<size_y;col++){
            if( row==0 || row+1 == size_x||col==0||col+1 == size_y){
+               //将地图四周设置为墙
                 map[row][col] ='#';
            }else{
                 map[row][col] =' ';
            }
         }
     }
-
+    //在地图上设置好蛇头和食物的位置
     map[sk_hd_pos.X][sk_hd_pos.Y] = '>';
     map[fd_pos.X][fd_pos.Y] = '*';
-
-
-
-
-
-
-
-
-
-
-
     //蛇的移动方向
     char direct = 'd';
-    //获取标标准缓冲
-    hOut= GetStdHandle(STD_OUTPUT_HANDLE);
-    //创建新的缓冲区
-    hBuf = CreateConsoleScreenBuffer(
-                GENERIC_READ | GENERIC_WRITE,
-                FILE_SHARE_READ | FILE_SHARE_WRITE,
-                NULL,CONSOLE_TEXTMODE_BUFFER,NULL);
 
-
-    //结束提示语的位置
-    COORD tip={4,2};
     //控制台字体基本样式
     SetConsoleTextAttribute(hOut,bs_col);
     //蛇头和蛇体位置判断
@@ -62,10 +36,58 @@ int main()
     struct snake *sk_hd = &sb;
     while(1){
         sb_next = sk_hd;
-        //清理屏幕
-        system("cls");
-        //获得键盘输入 非阻塞
-        if(kbhit()) direct = getch();
+        //清理屏幕 双缓冲模式下可以不用
+        //system("cls");
+        //获得键盘输入
+        if(kbhit()){
+            char key = direct;
+            direct = getch();
+            //排除其它键
+            direct = direct == 'q' || direct == 'a' || direct == 'w' || direct == 's'|| direct == 'd' ? direct : key;
+            switch(key){
+                case 'w':{
+                    if(direct  == 's' && length !=0) direct = key;
+                    break;
+                }
+                case 's':{
+                    if(direct   == 'w'  && length !=0)
+                        direct = key;
+                    break;
+                }
+                case 'a':{
+                    if(direct   == 'd'  && length !=0)
+                        direct = key;
+                    break;
+                }
+                case 'd':{
+                    if(direct  == 'a'  && length !=0)
+                        direct = key;
+                    break;
+                }
+                case 'q':{
+                    switch(direct){
+                        case 'w':{
+                            map[sk_hd->x -1][sk_hd->y] == '+'?direct = key:NULL;
+                            break;
+                        }
+                        case 's':{
+                            map[sk_hd->x +1][sk_hd->y] == '+'?direct = key:NULL;
+                            break;
+                        }
+                        case 'a':{
+                            map[sk_hd->x][sk_hd->y -1] == '+'?direct = key:NULL;
+                            break;
+                        }
+                        case 'd':{
+                            map[sk_hd->x][sk_hd->y +1] == '+'?direct = key:NULL;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        //清空之前爬行点
         map[sk_hd->x][sk_hd->y] = ' ';
         //记录蛇头爬行之前的点
         int p_x = sk_hd->x,p_y = sk_hd->y;
@@ -102,7 +124,7 @@ int main()
            sb_next = sb_next->bd_next;
         }
         //判断游戏中的事件
-        if(!(map[sk_hd->x][sk_hd->y] ^ '#')){
+        if(!(map[sk_hd->x][sk_hd->y] ^ '#') || !(map[sk_hd->x][sk_hd->y] ^ '+')&&direct !='q'){
             //游戏结束... 要将蛇的身体释放
             SetConsoleCursorPosition(hOut,tip);
             SetConsoleTextAttribute(hOut,0x0c);
@@ -120,7 +142,8 @@ int main()
         }else if(!(map[sk_hd->x][sk_hd->y] ^ '*')){
             //吃到食物
             map[p_x][p_y] = '+';
-            //循环中不要声明普通的结构体变量，
+            length++;
+            //循环中不要声明普通的结构体变量,否则内存地址相同
             //struct snake sk_tail = {p_x,p_y,NULL};
             //声明的结构体也不要释放
             struct snake *sk_tail = (struct snake *) malloc(sizeof(struct snake));
@@ -137,22 +160,21 @@ int main()
             }else{
                 sk_hd->bd_next = sk_tail;
             }
-            //设置食物
-            food:{
-                int nx = random(0,6),ny =random(0,8);
-                if(map[nx][ny] != '+' && map[nx][ny] != '>' ){
-                    map[nx][ny] ='*';
-                }else{
-                    sleep(200);
-                    goto food;
-                }
-            }
+            //食物的随机出现
+            HANDLE TEatFood = CreateThread((LPSECURITY_ATTRIBUTES) 0,0,
+                                  (LPTHREAD_START_ROUTINE) eatFood,
+                                  (LPVOID)map, 0,0);
         }
         map[sk_hd->x][sk_hd->y] = '>';
-        printMap(map,11,8);
+
+        //打印的方法
+        //printMap(&map,size_x,size_y);
+        //双缓冲的方法
+        double_cache(&map,size_x,size_y);
         Sleep(300);
         setbuf(stdin,NULL);
     }
+
     return 0;
 }
 

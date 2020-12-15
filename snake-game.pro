@@ -8,5 +8,6 @@ SOURCES += main.c
 DISTFILES +=
 
 HEADERS += \
-    snake_func.h
+    snake_func.h \
+    init.h
 LIBS += -lWinmm
