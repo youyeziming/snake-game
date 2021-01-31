@@ -4,15 +4,11 @@
 
 int main()
 {
-
-
-
     //游戏中的配置初始化
     initial_load();
 
     //游戏地图初始化
     char map[size_x][size_y];
-
     for(int row =0;row<size_x;row++){
         for(int col =0;col<size_y;col++){
            if( row==0 || row+1 == size_x||col==0||col+1 == size_y){
@@ -28,13 +24,13 @@ int main()
     map[fd_pos.X][fd_pos.Y] = '*';
     //蛇的移动方向
     char direct = 'd';
-
     //控制台字体基本样式
     SetConsoleTextAttribute(hOut,bs_col);
     //蛇头和蛇体位置判断
     struct snake sb = {sk_hd_pos.X,sk_hd_pos.Y,NULL},*sb_next = NULL;
     struct snake *sk_hd = &sb;
     while(1){
+        map[fd_pos.X][fd_pos.Y] = '*';
         sb_next = sk_hd;
         //清理屏幕 双缓冲模式下可以不用
         //system("cls");
@@ -112,11 +108,12 @@ int main()
 
             }
         } 
-        //身体的爬行
+        //身体的爬行 判断是否有下一个节点
         while(sb_next->bd_next){
            int ax = sb_next->bd_next->x,ay = sb_next->bd_next->y;
            map[p_x][p_y] = '+';
            map[ax][ay] = ' ';
+           //将下一个节点保存之前节点的位置
            sb_next->bd_next->x = p_x;
            sb_next->bd_next->y = p_y;
            p_x = ax;
@@ -166,7 +163,6 @@ int main()
                                   (LPVOID)map, 0,0);
         }
         map[sk_hd->x][sk_hd->y] = '>';
-
         //打印的方法
         //printMap(&map,size_x,size_y);
         //双缓冲的方法

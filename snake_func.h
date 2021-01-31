@@ -4,15 +4,23 @@
 
 /**
  *@author YYZiMig
- * @description 这是一个我自己制作的贪吃蛇游戏,用到了最基本的链表,和一些windows 的api
- * 加入双缓冲
+ * @description 这是一个我自己制作的贪吃蛇游戏,用到了最基本的链表,和一些windows 的api 加入了双缓冲
  *
- * 地图
+ *
+ * 地图编辑
  *  # 为墙
  *  > 为蛇头
  *  + 为蛇身
  *  * 为食物
- *  + weishesheng
+ *  + 为蛇身体
+ *
+ * 游戏说明
+ * a键为 向左
+ * s键为 向下
+ * w键为 向上
+ * d键为 向右
+ * q键为 原地收缩
+ *
  *
  */
 
@@ -33,20 +41,25 @@ struct snake {
     struct snake *bd_next;
 };
 
+//吃到食物后随机生成食物的地点
 void eatFood(char map[size_x][size_y]){
-    food:
+    int flag = 1;
+    while(flag){
         nx =random(1,size_x-2 );
         ny=random(1,size_y-2 );
-        if(map[nx][ny] != '+' && map[nx][ny] != '>' && map[nx][ny] != '#'){
+        if(map[nx][ny] != '+' && map[nx][ny] != '>' && map[nx][ny] != '#')
+        {
             map[nx][ny] ='*';
             fd_pos.X = nx;
             fd_pos.Y = ny;
-        }else
-            goto food;
+            flag = 0;
+        }
+    }
 }
 
 
 //地图打印函数 控制台会一直闪 地图越大,闪的越频繁
+
 void printMap(char *maps,int x,int y){
     for(int i =0;i<x;i++){
         for(int j =0;j<y;j++){
@@ -67,6 +80,7 @@ void printMap(char *maps,int x,int y){
         printf("\n");
     }
 }
+
 
 //生成指定范围的随机数
 int random(int begin,int end){
